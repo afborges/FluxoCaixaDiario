@@ -15,6 +15,13 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         catch (Exception ex)
         {
             logger.LogError(ex, "Erro inesperado: {Message}", ex.Message);
+
+            if (context.Response.HasStarted)
+            {
+                logger.LogWarning("A resposta já foi iniciada; não é possível retornar um erro estruturado.");
+                return;
+            }
+
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             context.Response.ContentType = "application/problem+json";
 
