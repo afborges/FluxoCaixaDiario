@@ -1,0 +1,48 @@
+# Binários e compilados
+bin/
+obj/
+out/
+publish/
+
+# Dados locais
+*.user
+*.suo
+.vs/
+.vscode/
+
+# Pacotes
+packages/
+*.nupkg
+
+# Logs e temporários
+*.log
+*.tmp
+*.cache
+Logs/
+
+# Docker
+.dockerignore
+
+# Secrets e configurações locais (nunca commitar)
+**/appsettings.Local.json
+**/secrets.json
+.env
+.env.*
+
+# Cobertura de código
+coverage/
+TestResults/
+*.coveragexml
+*.coverage
+
+# Banco de dados local
+*.mdf
+*.ldf
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+tests/k6/results/

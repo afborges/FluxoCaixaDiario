@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+	  <PrivateAssets>all</PrivateAssets>
+	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="MassTransit.RabbitMQ" />
+	<PackageReference Include="StackExchange.Redis" />
+	<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+	<PackageReference Include="Polly.Core" />
+	<PackageReference Include="Microsoft.Extensions.Resilience" />
+  </ItemGroup>
+  <ItemGroup>
+	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+	<ProjectReference Include="..\..\Shared\FluxoCaixaDiario.SharedKernel\FluxoCaixaDiario.SharedKernel.csproj" />
+	<ProjectReference Include="..\FluxoCaixaDiario.Consolidado.Application\FluxoCaixaDiario.Consolidado.Application.csproj" />
+  </ItemGroup>
+</Project>

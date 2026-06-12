@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+	<PackageReference Include="Swashbuckle.AspNetCore" />
+	<PackageReference Include="Serilog.AspNetCore" />
+	<PackageReference Include="Serilog.Sinks.Seq" />
+	<PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+	<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+	<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+	<PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+	<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+	<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+	<PackageReference Include="AspNetCore.HealthChecks.RabbitMQ" />
+  </ItemGroup>
+  <ItemGroup>
+	<ProjectReference Include="..\..\Shared\FluxoCaixaDiario.SharedKernel\FluxoCaixaDiario.SharedKernel.csproj" />
+	<ProjectReference Include="..\FluxoCaixaDiario.Lancamentos.Application\FluxoCaixaDiario.Lancamentos.Application.csproj" />
+	<ProjectReference Include="..\FluxoCaixaDiario.Lancamentos.Infrastructure\FluxoCaixaDiario.Lancamentos.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>
