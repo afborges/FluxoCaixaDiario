@@ -176,7 +176,7 @@ FluxoCaixaDiario/
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/<seu-usuario>/FluxoCaixaDiario.git
+git clone https://github.com/afborges/FluxoCaixaDiario.git
 cd FluxoCaixaDiario
 ```
 
