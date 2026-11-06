@@ -1,0 +1,144 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11822.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.SharedKernel", "src\Shared\FluxoCaixaDiario.SharedKernel\FluxoCaixaDiario.SharedKernel.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Lancamentos.Domain", "src\Lancamentos\FluxoCaixaDiario.Lancamentos.Domain\FluxoCaixaDiario.Lancamentos.Domain.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567802}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Lancamentos.Application", "src\Lancamentos\FluxoCaixaDiario.Lancamentos.Application\FluxoCaixaDiario.Lancamentos.Application.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567803}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Lancamentos.Infrastructure", "src\Lancamentos\FluxoCaixaDiario.Lancamentos.Infrastructure\FluxoCaixaDiario.Lancamentos.Infrastructure.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567804}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Lancamentos.API", "src\Lancamentos\FluxoCaixaDiario.Lancamentos.API\FluxoCaixaDiario.Lancamentos.API.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567805}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Consolidado.Domain", "src\Consolidado\FluxoCaixaDiario.Consolidado.Domain\FluxoCaixaDiario.Consolidado.Domain.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567806}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Consolidado.Application", "src\Consolidado\FluxoCaixaDiario.Consolidado.Application\FluxoCaixaDiario.Consolidado.Application.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567807}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Consolidado.Infrastructure", "src\Consolidado\FluxoCaixaDiario.Consolidado.Infrastructure\FluxoCaixaDiario.Consolidado.Infrastructure.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567808}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Consolidado.API", "src\Consolidado\FluxoCaixaDiario.Consolidado.API\FluxoCaixaDiario.Consolidado.API.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567809}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Lancamentos.UnitTests", "tests\FluxoCaixaDiario.Lancamentos.UnitTests\FluxoCaixaDiario.Lancamentos.UnitTests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567810}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FluxoCaixaDiario.Consolidado.UnitTests", "tests\FluxoCaixaDiario.Consolidado.UnitTests\FluxoCaixaDiario.Consolidado.UnitTests.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567811}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F0000001-0000-0000-0000-000000000001}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{F0000001-0000-0000-0000-000000000002}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lancamentos", "Lancamentos", "{F0000001-0000-0000-0000-000000000003}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Consolidado", "Consolidado", "{F0000001-0000-0000-0000-000000000004}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F0000001-0000-0000-0000-000000000005}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{9D0CC3C6-4D27-420E-ACBB-5BD9B8302656}"
+	ProjectSection(SolutionItems) = preProject
+		docs\01-arquitetura-enterprise.md = docs\01-arquitetura-enterprise.md
+		docs\02-arquitetura-solucao.md = docs\02-arquitetura-solucao.md
+		docs\03-arquitetura-software.md = docs\03-arquitetura-software.md
+		docs\04-apresentacao-executiva.md = docs\04-apresentacao-executiva.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{CA038C13-C6E9-4E48-928C-04599FC5EE31}"
+	ProjectSection(SolutionItems) = preProject
+		docs\adr\ADR-001-microservicos.md = docs\adr\ADR-001-microservicos.md
+		docs\adr\ADR-002-mensageria.md = docs\adr\ADR-002-mensageria.md
+		docs\adr\ADR-003-persistencia.md = docs\adr\ADR-003-persistencia.md
+		docs\adr\ADR-004-cache.md = docs\adr\ADR-004-cache.md
+		docs\adr\ADR-005-observabilidade.md = docs\adr\ADR-005-observabilidade.md
+		docs\adr\ADR-006-autenticacao-api-key.md = docs\adr\ADR-006-autenticacao-api-key.md
+		docs\adr\ADR-007-rate-limiting.md = docs\adr\ADR-007-rate-limiting.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infra", "infra", "{F7BB5A48-B2CB-4161-9E5A-18BFA31CC02C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{273F5614-E319-4435-8DF1-61D7F34B9FC1}"
+	ProjectSection(SolutionItems) = preProject
+		infra\nginx\nginx.conf = infra\nginx\nginx.conf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prometheus", "prometheus", "{06617DB6-E407-4872-8212-0614C57098FE}"
+	ProjectSection(SolutionItems) = preProject
+		infra\prometheus\prometheus.yml = infra\prometheus\prometheus.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567801}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567802}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567802}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567802}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567803}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567803}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567803}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567803}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567804}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567804}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567804}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567804}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567805}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567805}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567805}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567805}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567806}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567806}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567806}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567806}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567807}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567807}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567807}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567807}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567808}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567808}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567808}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567808}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567809}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567809}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567809}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567809}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567810}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567810}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567810}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567810}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567811}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567811}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567811}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567811}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567801} = {F0000001-0000-0000-0000-000000000002}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567802} = {F0000001-0000-0000-0000-000000000003}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567803} = {F0000001-0000-0000-0000-000000000003}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567804} = {F0000001-0000-0000-0000-000000000003}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567805} = {F0000001-0000-0000-0000-000000000003}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567806} = {F0000001-0000-0000-0000-000000000004}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567807} = {F0000001-0000-0000-0000-000000000004}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567808} = {F0000001-0000-0000-0000-000000000004}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567809} = {F0000001-0000-0000-0000-000000000004}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567810} = {F0000001-0000-0000-0000-000000000005}
+		{A1B2C3D4-E5F6-7890-ABCD-EF1234567811} = {F0000001-0000-0000-0000-000000000005}
+		{F0000001-0000-0000-0000-000000000002} = {F0000001-0000-0000-0000-000000000001}
+		{F0000001-0000-0000-0000-000000000003} = {F0000001-0000-0000-0000-000000000001}
+		{F0000001-0000-0000-0000-000000000004} = {F0000001-0000-0000-0000-000000000001}
+		{CA038C13-C6E9-4E48-928C-04599FC5EE31} = {9D0CC3C6-4D27-420E-ACBB-5BD9B8302656}
+		{273F5614-E319-4435-8DF1-61D7F34B9FC1} = {F7BB5A48-B2CB-4161-9E5A-18BFA31CC02C}
+		{06617DB6-E407-4872-8212-0614C57098FE} = {F7BB5A48-B2CB-4161-9E5A-18BFA31CC02C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DF8E50E6-0F74-43A5-B84F-04DF9B9F804F}
+	EndGlobalSection
+EndGlobal

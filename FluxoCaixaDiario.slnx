@@ -1,0 +1,60 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/01-arquitetura-enterprise.md" />
+    <File Path="docs/02-arquitetura-solucao.md" />
+    <File Path="docs/03-arquitetura-software.md" />
+    <File Path="docs/04-apresentacao-executiva.md" />
+  </Folder>
+  <Folder Name="/docs/adr/">
+    <File Path="docs/adr/ADR-001-microservicos.md" />
+    <File Path="docs/adr/ADR-002-mensageria.md" />
+    <File Path="docs/adr/ADR-003-persistencia.md" />
+    <File Path="docs/adr/ADR-004-cache.md" />
+    <File Path="docs/adr/ADR-005-observabilidade.md" />
+    <File Path="docs/adr/ADR-006-autenticacao-api-key.md" />
+    <File Path="docs/adr/ADR-007-rate-limiting.md" />
+  </Folder>
+  <Folder Name="/infra/" />
+  <Folder Name="/infra/nginx/">
+    <File Path="nginx.conf" />
+  </Folder>
+  <Folder Name="/infra/prometheus/">
+    <File Path="prometheus.yml" />
+  </Folder>
+  <Folder Name="/req/">
+    <File Path="req/desafio-arquiteto-software-sep26.pdf" />
+    <File Path="req/desafio-arquiteto-software.docx" />
+    <File Path="req/Desafio_Tecnico.txt" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Consolidado/">
+    <Project Path="src/Consolidado/FluxoCaixaDiario.Consolidado.API/FluxoCaixaDiario.Consolidado.API.csproj" />
+    <Project Path="src/Consolidado/FluxoCaixaDiario.Consolidado.Application/FluxoCaixaDiario.Consolidado.Application.csproj" />
+    <Project Path="src/Consolidado/FluxoCaixaDiario.Consolidado.Domain/FluxoCaixaDiario.Consolidado.Domain.csproj" />
+    <Project Path="src/Consolidado/FluxoCaixaDiario.Consolidado.Infrastructure/FluxoCaixaDiario.Consolidado.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Lancamento/">
+    <Project Path="src/Lancamentos/FluxoCaixaDiario.Lancamentos.API/FluxoCaixaDiario.Lancamentos.API.csproj" />
+    <Project Path="src/Lancamentos/FluxoCaixaDiario.Lancamentos.Application/FluxoCaixaDiario.Lancamentos.Application.csproj" />
+    <Project Path="src/Lancamentos/FluxoCaixaDiario.Lancamentos.Domain/FluxoCaixaDiario.Lancamentos.Domain.csproj" />
+    <Project Path="src/Lancamentos/FluxoCaixaDiario.Lancamentos.Infrastructure/FluxoCaixaDiario.Lancamentos.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Lancamentos/" />
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/FluxoCaixaDiario.SharedKernel/FluxoCaixaDiario.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/UI/">
+    <Project Path="src/FluxoCaixaDiario.UI/FluxoCaixaDiario.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FluxoCaixaDiario.Consolidado.IntegrationTests/FluxoCaixaDiario.Consolidado.IntegrationTests.csproj" />
+    <Project Path="tests/FluxoCaixaDiario.Consolidado.UnitTests/FluxoCaixaDiario.Consolidado.UnitTests.csproj" />
+    <Project Path="tests/FluxoCaixaDiario.Lancamentos.IntegrationTests/FluxoCaixaDiario.Lancamentos.IntegrationTests.csproj" />
+    <Project Path="tests/FluxoCaixaDiario.Lancamentos.UnitTests/FluxoCaixaDiario.Lancamentos.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/k6/">
+    <File Path="tests/k6/consolidado-baseline.js" />
+    <File Path="tests/k6/lancamentos-baseline.js" />
+    <File Path="tests/k6/README.md" />
+  </Folder>
+</Solution>

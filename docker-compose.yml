@@ -1,0 +1,163 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: fluxo-caixa-sqlserver
+    environment:
+      SA_PASSWORD: "FluxoCaixa@2024"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - fluxo-caixa-net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P FluxoCaixa@2024 -Q 'SELECT 1' -No -C || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: fluxo-caixa-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - fluxo-caixa-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: fluxo-caixa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - fluxo-caixa-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  seq:
+    image: datalust/seq:2024.3
+    container_name: fluxo-caixa-seq
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:5341"
+      - "8088:80"
+    volumes:
+      - seq_data:/data
+    networks:
+      - fluxo-caixa-net
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: fluxo-caixa-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - fluxo-caixa-net
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: fluxo-caixa-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - fluxo-caixa-net
+    depends_on:
+      - prometheus
+
+  lancamentos-api:
+    build:
+      context: .
+      dockerfile: src/Lancamentos/FluxoCaixaDiario.Lancamentos.API/Dockerfile
+    container_name: fluxo-caixa-lancamentos-api
+    ports:
+      - "5010:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fluxo-caixa-net
+    restart: unless-stopped
+
+  consolidado-api:
+    build:
+      context: .
+      dockerfile: src/Consolidado/FluxoCaixaDiario.Consolidado.API/Dockerfile
+    container_name: fluxo-caixa-consolidado-api
+    ports:
+      - "5011:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fluxo-caixa-net
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: fluxo-caixa-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - lancamentos-api
+      - consolidado-api
+    networks:
+      - fluxo-caixa-net
+
+volumes:
+  sqlserver_data:
+  rabbitmq_data:
+  redis_data:
+  seq_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  fluxo-caixa-net:
+    driver: bridge

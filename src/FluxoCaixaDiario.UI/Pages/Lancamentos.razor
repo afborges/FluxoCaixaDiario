@@ -1,0 +1,308 @@
+@page "/lancamentos"
+@using System.Globalization
+@inject LancamentosApiService LancamentosService
+
+<PageTitle>Lançamentos</PageTitle>
+
+<h2 class="mb-4">Lançamentos</h2>
+
+@if (!string.IsNullOrEmpty(_mensagem))
+{
+    <div class="alert @(_mensagemSucesso ? "alert-success" : "alert-danger") alert-dismissible fade show" role="alert">
+        @_mensagem
+        <button type="button" class="btn-close" @onclick="() => _mensagem = null"></button>
+    </div>
+}
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-header"><strong>Filtros</strong></div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Data Início</label>
+                <input type="date" class="form-control" @bind="_filtroDataInicio" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Data Fim</label>
+                <input type="date" class="form-control" @bind="_filtroDataFim" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" @bind="_filtroTipo">
+                    <option value="">Todos</option>
+                    <option value="Credito">Crédito</option>
+                    <option value="Debito">Débito</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" @bind="_filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary flex-fill" @onclick="BuscarAsync">Buscar</button>
+                <button class="btn btn-outline-secondary" @onclick="LimparFiltros">Limpar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botão novo lançamento -->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn @(_mostrarFormulario ? "btn-outline-secondary" : "btn-success")" @onclick="ToggleFormulario">
+        @(_mostrarFormulario ? "✕ Fechar" : "+ Novo Lançamento")
+    </button>
+</div>
+
+<!-- Formulário de criação -->
+@if (_mostrarFormulario)
+{
+    <div class="card mb-4 border-success">
+        <div class="card-header bg-success text-white"><strong>Novo Lançamento</strong></div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Tipo *</label>
+                    <select class="form-select" @bind="_novo.Tipo">
+                        <option value="Credito">Crédito</option>
+                        <option value="Debito">Débito</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Valor *</label>
+                    <input type="number" class="form-control" step="0.01" min="0.01"
+                           @bind="_novo.Valor" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Descrição *</label>
+                    <input type="text" class="form-control" maxlength="200"
+                           @bind="_novo.Descricao" placeholder="Descrição do lançamento" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data *</label>
+                    <input type="date" class="form-control" @bind="_novaData" />
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-success w-100" @onclick="CriarAsync" disabled="@_salvando">
+                        @(_salvando ? "..." : "Salvar")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Tabela / Loading / Vazio -->
+@if (_carregando)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Carregando lançamentos...</p>
+    </div>
+}
+else if (_resultado is null)
+{
+    <div class="alert alert-warning">
+        <strong>Atenção:</strong> Não foi possível conectar à API de lançamentos.
+        Verifique se a API está em execução em <code>http://localhost:5010</code>.
+    </div>
+}
+else if (!_resultado.Items.Any())
+{
+    <div class="alert alert-info">Nenhum lançamento encontrado para os filtros selecionados.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th class="text-end">Valor</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _resultado.Items)
+                {
+                    <tr>
+                        <td>@item.Data.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <span class="badge @(item.Tipo == "Credito" ? "bg-success" : "bg-danger")">
+                                @(item.Tipo == "Credito" ? "Crédito" : "Débito")
+                            </span>
+                        </td>
+                        <td>@item.Descricao</td>
+                        <td class="text-end fw-bold @(item.Tipo == "Credito" ? "text-success" : "text-danger")">
+                            @item.Valor.ToString("C2", _ptBR)
+                        </td>
+                        <td>
+                            <span class="badge @(item.Status == "Ativo" ? "bg-primary" : "bg-secondary")">
+                                @item.Status
+                            </span>
+                        </td>
+                        <td class="text-muted small">@item.CriadoEm.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-center">
+                            @if (item.Status == "Ativo")
+                            {
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => CancelarAsync(item.Id)"
+                                        disabled="@(_cancelando == item.Id)">
+                                    @(_cancelando == item.Id ? "..." : "Cancelar")
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    @if (_resultado.TotalPaginas > 1)
+    {
+        <nav aria-label="Paginação">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(_paginaAtual == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => IrParaPaginaAsync(_paginaAtual - 1)">‹</button>
+                </li>
+                @for (var p = 1; p <= _resultado.TotalPaginas; p++)
+                {
+                    var pg = p;
+                    <li class="page-item @(pg == _paginaAtual ? "active" : "")">
+                        <button class="page-link" @onclick="() => IrParaPaginaAsync(pg)">@pg</button>
+                    </li>
+                }
+                <li class="page-item @(_paginaAtual == _resultado.TotalPaginas ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => IrParaPaginaAsync(_paginaAtual + 1)">›</button>
+                </li>
+            </ul>
+        </nav>
+        <p class="text-center text-muted small">
+            @_resultado.Total registro(s) — Página @_paginaAtual de @_resultado.TotalPaginas
+        </p>
+    }
+}
+
+@code {
+    private static readonly CultureInfo _ptBR = new("pt-BR");
+
+    private PaginadoModel<LancamentoModel>? _resultado;
+    private CriarLancamentoRequest _novo = new();
+    private DateTime _novaData = DateTime.Today;
+
+    private bool _carregando;
+    private bool _salvando;
+    private bool _mostrarFormulario;
+    private Guid? _cancelando;
+    private string? _mensagem;
+    private bool _mensagemSucesso;
+    private int _paginaAtual = 1;
+
+    private DateTime? _filtroDataInicio;
+    private DateTime? _filtroDataFim;
+    private string _filtroTipo = string.Empty;
+    private string _filtroStatus = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await BuscarAsync();
+
+    private async Task BuscarAsync()
+    {
+        _paginaAtual = 1;
+        await CarregarAsync();
+    }
+
+    private async Task IrParaPaginaAsync(int pagina)
+    {
+        _paginaAtual = pagina;
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        _carregando = true;
+        var di = _filtroDataInicio.HasValue ? DateOnly.FromDateTime(_filtroDataInicio.Value) : (DateOnly?)null;
+        var df = _filtroDataFim.HasValue ? DateOnly.FromDateTime(_filtroDataFim.Value) : (DateOnly?)null;
+        var tipo = string.IsNullOrEmpty(_filtroTipo) ? null : _filtroTipo;
+        var status = string.IsNullOrEmpty(_filtroStatus) ? null : _filtroStatus;
+        _resultado = await LancamentosService.ListarAsync(di, df, tipo, status, _paginaAtual);
+        _carregando = false;
+    }
+
+    private void LimparFiltros()
+    {
+        _filtroDataInicio = null;
+        _filtroDataFim = null;
+        _filtroTipo = string.Empty;
+        _filtroStatus = string.Empty;
+    }
+
+    private void ToggleFormulario()
+    {
+        _mostrarFormulario = !_mostrarFormulario;
+        if (_mostrarFormulario)
+        {
+            _novo = new();
+            _novaData = DateTime.Today;
+        }
+    }
+
+    private async Task CriarAsync()
+    {
+        if (_novo.Valor <= 0 || string.IsNullOrWhiteSpace(_novo.Descricao))
+        {
+            _mensagemSucesso = false;
+            _mensagem = "Preencha todos os campos obrigatórios: Valor (> 0) e Descrição.";
+            return;
+        }
+
+        _salvando = true;
+        _novo.Data = DateOnly.FromDateTime(_novaData);
+        var (success, _, erro) = await LancamentosService.CriarAsync(_novo);
+        _salvando = false;
+
+        if (success)
+        {
+            _mensagemSucesso = true;
+            _mensagem = "Lançamento criado com sucesso!";
+            _mostrarFormulario = false;
+            await BuscarAsync();
+        }
+        else
+        {
+            _mensagemSucesso = false;
+            _mensagem = $"Erro ao criar lançamento: {erro}";
+        }
+    }
+
+    private async Task CancelarAsync(Guid id)
+    {
+        _cancelando = id;
+        var (success, erro) = await LancamentosService.CancelarAsync(id);
+        _cancelando = null;
+
+        if (success)
+        {
+            _mensagemSucesso = true;
+            _mensagem = "Lançamento cancelado com sucesso!";
+            await CarregarAsync();
+        }
+        else
+        {
+            _mensagemSucesso = false;
+            _mensagem = $"Erro ao cancelar: {erro}";
+        }
+    }
+}

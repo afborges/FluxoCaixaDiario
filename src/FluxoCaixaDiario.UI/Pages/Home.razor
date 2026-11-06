@@ -1,0 +1,229 @@
+﻿@page "/"
+@using System.Globalization
+@inject LancamentosApiService LancamentosService
+@inject ConsolidadoApiService ConsolidadoService
+
+<PageTitle>Início — Fluxo de Caixa Diário</PageTitle>
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="mb-0">💰 Fluxo de Caixa Diário</h2>
+        <p class="text-muted mb-0">Bem-vindo ao painel de controle — @DateTime.Today.ToString("dddd, dd 'de' MMMM 'de' yyyy", _ptBR)</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm ms-auto" @onclick="CarregarAsync" disabled="@_carregando">
+        @(_carregando ? "⏳ Atualizando..." : "🔄 Atualizar")
+    </button>
+</div>
+
+<!-- Status das APIs -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <h5 class="text-muted fw-semibold">🔌 Status das APIs</h5>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                @if (_statusLancamentos is null)
+                {
+                    <span class="fs-2">⏳</span>
+                }
+                else if (_statusLancamentos == true)
+                {
+                    <span class="fs-2">✅</span>
+                }
+                else
+                {
+                    <span class="fs-2">❌</span>
+                }
+                <div>
+                    <div class="fw-bold">API de Lançamentos</div>
+                    <small class="text-muted">
+                        @if (_statusLancamentos is null) { <span>Verificando...</span> }
+                        else if (_statusLancamentos == true) { <span class="text-success">Conectada e operacional</span> }
+                        else { <span class="text-danger">Sem conexão — verifique se a API está em execução</span> }
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                @if (_statusConsolidado is null)
+                {
+                    <span class="fs-2">⏳</span>
+                }
+                else if (_statusConsolidado == true)
+                {
+                    <span class="fs-2">✅</span>
+                }
+                else
+                {
+                    <span class="fs-2">❌</span>
+                }
+                <div>
+                    <div class="fw-bold">API de Consolidado</div>
+                    <small class="text-muted">
+                        @if (_statusConsolidado is null) { <span>Verificando...</span> }
+                        else if (_statusConsolidado == true) { <span class="text-success">Conectada e operacional</span> }
+                        else { <span class="text-danger">Sem conexão — verifique se a API está em execução</span> }
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo de Hoje -->
+<h5 class="text-muted fw-semibold mb-3">📊 Resumo de Hoje (@DateOnly.FromDateTime(DateTime.Today).ToString("dd/MM/yyyy"))</h5>
+@if (_carregando)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted small">Carregando dados...</p>
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="text-success fs-4 fw-bold">@_creditosHoje.ToString("C2", _ptBR)</div>
+                    <div class="text-muted small">💚 Créditos hoje</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="text-danger fs-4 fw-bold">@_debitosHoje.ToString("C2", _ptBR)</div>
+                    <div class="text-muted small">❤️ Débitos hoje</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="@(_saldoHoje >= 0 ? "text-primary" : "text-warning") fs-4 fw-bold">@_saldoHoje.ToString("C2", _ptBR)</div>
+                    <div class="text-muted small">@(_saldoHoje >= 0 ? "📈" : "📉") Saldo hoje</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center h-100">
+                <div class="card-body">
+                    <div class="text-secondary fs-4 fw-bold">@_lancamentosHoje</div>
+                    <div class="text-muted small">📋 Lançamentos hoje</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_creditosHoje > 0 || _debitosHoje > 0)
+    {
+        var total = _creditosHoje + _debitosHoje;
+        var pctCredito = total > 0 ? (int)(_creditosHoje / total * 100) : 0;
+        var pctDebito = 100 - pctCredito;
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small text-success fw-bold">💚 Créditos @pctCredito%</span>
+                    <span class="small text-danger fw-bold">❤️ Débitos @pctDebito%</span>
+                </div>
+                <div class="progress" style="height: 18px;">
+                    <div class="progress-bar bg-success" style="width: @pctCredito%">@_creditosHoje.ToString("C2", _ptBR)</div>
+                    <div class="progress-bar bg-danger" style="width: @pctDebito%">@_debitosHoje.ToString("C2", _ptBR)</div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-- Acesso rápido -->
+<h5 class="text-muted fw-semibold mb-3">🚀 Acesso Rápido</h5>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="fs-3 mb-2">📝</div>
+                <h6 class="card-title">Lançamentos</h6>
+                <p class="card-text text-muted small flex-fill">Registre créditos e débitos, filtre por período, tipo e status, e gerencie cancelamentos.</p>
+                <a href="lancamentos" class="btn btn-primary btn-sm align-self-start">Abrir</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="fs-3 mb-2">📊</div>
+                <h6 class="card-title">Dashboard</h6>
+                <p class="card-text text-muted small flex-fill">Visualize totais de créditos, débitos e saldo por período com tabela analítica.</p>
+                <a href="dashboard" class="btn btn-success btn-sm align-self-start">Abrir</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="fs-3 mb-2">📅</div>
+                <h6 class="card-title">Consolidado por Dia</h6>
+                <p class="card-text text-muted small flex-fill">Veja o resultado consolidado de cada dia em cards visuais com indicadores de saúde financeira.</p>
+                <a href="consolidado" class="btn btn-info btn-sm align-self-start text-white">Abrir</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly CultureInfo _ptBR = new("pt-BR");
+
+    private bool _carregando;
+    private bool? _statusLancamentos;
+    private bool? _statusConsolidado;
+    private decimal _creditosHoje;
+    private decimal _debitosHoje;
+    private decimal _saldoHoje;
+    private int _lancamentosHoje;
+
+    protected override async Task OnInitializedAsync() => await CarregarAsync();
+
+    private async Task CarregarAsync()
+    {
+        _carregando = true;
+        _statusLancamentos = null;
+        _statusConsolidado = null;
+        StateHasChanged();
+
+        var hoje = DateOnly.FromDateTime(DateTime.Today);
+
+        var taskLancamentos = LancamentosService.ListarAsync(hoje, hoje, tamanhoPagina: 1);
+        var taskConsolidado = ConsolidadoService.ObterHistoricoAsync(hoje, hoje);
+
+        await Task.WhenAll(taskLancamentos, taskConsolidado);
+
+        var resultLanc = await taskLancamentos;
+        _statusLancamentos = resultLanc is not null;
+
+        var (consolidadoHoje, _) = await taskConsolidado;
+        _statusConsolidado = consolidadoHoje is not null;
+
+        if (consolidadoHoje?.Count > 0)
+        {
+            var diaHoje = consolidadoHoje[0];
+            _creditosHoje = diaHoje.TotalCreditos;
+            _debitosHoje = diaHoje.TotalDebitos;
+            _saldoHoje = diaHoje.SaldoFinal;
+            _lancamentosHoje = diaHoje.QuantidadeLancamentos;
+        }
+        else
+        {
+            _creditosHoje = 0;
+            _debitosHoje = 0;
+            _saldoHoje = 0;
+            _lancamentosHoje = 0;
+        }
+
+        _carregando = false;
+    }
+}

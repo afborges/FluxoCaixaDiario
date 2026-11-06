@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+	<PackageReference Include="MediatR" />
+	<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+	<ProjectReference Include="..\..\Shared\FluxoCaixaDiario.SharedKernel\FluxoCaixaDiario.SharedKernel.csproj" />
+	<ProjectReference Include="..\FluxoCaixaDiario.Consolidado.Domain\FluxoCaixaDiario.Consolidado.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,256 @@
+@page "/consolidado"
+@using System.Globalization
+@inject ConsolidadoApiService ConsolidadoService
+@inject LancamentosApiService LancamentosService
+@inject NavigationManager Nav
+
+<PageTitle>Consolidado por Dia</PageTitle>
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <div>
+        <h2 class="mb-0">📅 Consolidado por Dia</h2>
+        <p class="text-muted mb-0 small">Resultado financeiro consolidado de cada dia do período</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm ms-auto" @onclick="ConsultarAsync" disabled="@_carregando">
+        @(_carregando ? "⏳" : "🔄") Atualizar
+    </button>
+</div>
+
+<!-- Seletor de período -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small">📅 Data Início</label>
+                <input type="date" class="form-control form-control-sm" @bind="_dataInicio" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small">📅 Data Fim</label>
+                <input type="date" class="form-control form-control-sm" @bind="_dataFim" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary btn-sm w-100" @onclick="ConsultarAsync" disabled="@_carregando">
+                    @(_carregando ? "⏳ Aguarde..." : "🔍 Buscar")
+                </button>
+            </div>
+            <div class="col-md-4 d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-secondary btn-sm" @onclick='() => AtalhoAsync(7)'>7 dias</button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick='() => AtalhoAsync(14)'>14 dias</button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick='() => AtalhoAsync(30)'>30 dias</button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="AtalhoMesAtualAsync">Mês atual</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_erro))
+{
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+        <span class="fs-5">❌</span>
+        <div>
+            <strong>Erro ao carregar consolidado</strong><br />
+            <small>@_erro</small>
+        </div>
+    </div>
+}
+
+@if (_carregando)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted">Carregando consolidado por dia...</p>
+    </div>
+}
+else if (_historico is not null)
+{
+    @if (!_historico.Any())
+    {
+        <div class="alert alert-info text-center py-4">
+            <div class="fs-3 mb-2">📭</div>
+            <strong>Nenhum dado encontrado</strong><br />
+            <small class="text-muted">Não há lançamentos consolidados para o período selecionado.</small>
+        </div>
+    }
+    else
+    {
+        <!-- Totalizadores do período -->
+        var totalC = _historico.Sum(d => d.TotalCreditos);
+        var totalD = _historico.Sum(d => d.TotalDebitos);
+        var totalS = _historico.Sum(d => d.SaldoFinal);
+        var totalL = _historico.Sum(d => d.QuantidadeLancamentos);
+        var totalGeral = totalC + totalD;
+        var pctGeralC = totalGeral > 0 ? (int)(totalC / totalGeral * 100) : 0;
+
+        <div class="card border-0 shadow-sm mb-4 bg-light">
+            <div class="card-body">
+                <div class="row g-3 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="text-success fw-bold fs-5">@totalC.ToString("C2", _ptBR)</div>
+                        <div class="text-muted small">💚 Total Créditos</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-danger fw-bold fs-5">@totalD.ToString("C2", _ptBR)</div>
+                        <div class="text-muted small">❤️ Total Débitos</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="@(totalS >= 0 ? "text-primary" : "text-warning") fw-bold fs-5">@totalS.ToString("C2", _ptBR)</div>
+                        <div class="text-muted small">@(totalS >= 0 ? "📈" : "📉") Saldo do Período</div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-secondary fw-bold fs-5">@totalL</div>
+                        <div class="text-muted small">📋 Lançamentos / @_historico.Count dia(s)</div>
+                    </div>
+                </div>
+                @if (totalGeral > 0)
+                {
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:0.75rem">
+                            <span class="text-success fw-bold">💚 Créditos @pctGeralC%</span>
+                            <span class="text-danger fw-bold">❤️ Débitos @(100 - pctGeralC)%</span>
+                        </div>
+                        <div class="progress" style="height:12px">
+                            <div class="progress-bar bg-success" style="width:@pctGeralC%" title="Créditos">
+                                @if (pctGeralC > 10) { <span style="font-size:0.65rem">@totalC.ToString("C2", _ptBR)</span> }
+                            </div>
+                            <div class="progress-bar bg-danger" style="width:@(100 - pctGeralC)%" title="Débitos">
+                                @if ((100 - pctGeralC) > 10) { <span style="font-size:0.65rem">@totalD.ToString("C2", _ptBR)</span> }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Cards por dia -->
+        <div class="row g-3">
+            @foreach (var dia in _historico.OrderByDescending(d => d.Data))
+            {
+                var total = dia.TotalCreditos + dia.TotalDebitos;
+                var pctC = total > 0 ? (int)(dia.TotalCreditos / total * 100) : 0;
+                var pctD = 100 - pctC;
+                var positivo = dia.SaldoFinal >= 0;
+                var isHoje = dia.Data == DateOnly.FromDateTime(DateTime.Today);
+                var isOntem = dia.Data == DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
+
+                <div class="col-sm-6 col-lg-4 col-xl-3">
+                    <div class="card h-100 shadow-sm border-0"
+                         style="border-left: 4px solid @(positivo ? "#198754" : "#dc3545") !important; border-left-width: 4px !important;">
+                        <!-- Cabeçalho do dia -->
+                        <div class="card-header border-0 pb-1" style="background: @(positivo ? "#f0fdf4" : "#fef2f2")">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-bold">@dia.Data.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted" style="font-size:0.72rem">
+                                        @dia.Data.ToString("dddd", _ptBR)
+                                        @if (isHoje) { <span class="badge bg-primary ms-1" style="font-size:0.6rem">Hoje</span> }
+                                        @if (isOntem) { <span class="badge bg-secondary ms-1" style="font-size:0.6rem">Ontem</span> }
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold @(positivo ? "text-success" : "text-danger")" style="font-size:0.85rem">
+                                        @(positivo ? "▲" : "▼") @dia.SaldoFinal.ToString("C2", _ptBR)
+                                    </div>
+                                    <div class="text-muted" style="font-size:0.65rem">saldo final</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body pt-2 pb-2">
+                            <!-- Crédito e Débito lado a lado -->
+                            <div class="row g-1 mb-2">
+                                <div class="col-6">
+                                    <div class="text-center rounded py-1" style="background:#f0fdf4">
+                                        <div class="text-success fw-bold" style="font-size:0.8rem">@dia.TotalCreditos.ToString("C2", _ptBR)</div>
+                                        <div class="text-muted" style="font-size:0.65rem">💚 Créditos</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center rounded py-1" style="background:#fef2f2">
+                                        <div class="text-danger fw-bold" style="font-size:0.8rem">@dia.TotalDebitos.ToString("C2", _ptBR)</div>
+                                        <div class="text-muted" style="font-size:0.65rem">❤️ Débitos</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Barra de proporção -->
+                            @if (total > 0)
+                            {
+                                <div class="progress mb-2" style="height:6px" title="@pctC% créditos / @pctD% débitos">
+                                    <div class="progress-bar bg-success" style="width:@pctC%"></div>
+                                    <div class="progress-bar bg-danger" style="width:@pctD%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between" style="font-size:0.65rem">
+                                    <span class="text-success">@pctC% crédito</span>
+                                    <span class="text-danger">@pctD% débito</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted" style="font-size:0.7rem">Sem movimentação</div>
+                            }
+                        </div>
+
+                        <div class="card-footer border-0 pt-0" style="background:transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-light text-dark border" style="font-size:0.65rem">
+                                    📋 @dia.QuantidadeLancamentos lanç.
+                                </span>
+                                <button class="btn btn-link btn-sm p-0 text-muted" style="font-size:0.7rem"
+                                        @onclick="() => VerLancamentos(dia.Data)">
+                                    Ver lançamentos →
+                                </button>
+                            </div>
+                            <div class="text-muted mt-1" style="font-size:0.6rem">
+                                Atualizado: @dia.UltimaAtualizacao.ToString("HH:mm 'de' dd/MM", _ptBR)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private static readonly CultureInfo _ptBR = new("pt-BR");
+
+    private List<ConsolidadoModel>? _historico;
+    private bool _carregando;
+    private string? _erro;
+    private DateTime _dataInicio = DateTime.Today.AddDays(-13);
+    private DateTime _dataFim = DateTime.Today;
+
+    protected override async Task OnInitializedAsync() => await ConsultarAsync();
+
+    private async Task AtalhoAsync(int dias)
+    {
+        _dataInicio = DateTime.Today.AddDays(-(dias - 1));
+        _dataFim = DateTime.Today;
+        await ConsultarAsync();
+    }
+
+    private async Task AtalhoMesAtualAsync()
+    {
+        _dataInicio = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        _dataFim = DateTime.Today;
+        await ConsultarAsync();
+    }
+
+    private void VerLancamentos(DateOnly data)
+    {
+        var d = data.ToString("yyyy-MM-dd");
+        Nav.NavigateTo($"/lancamentos?dataInicio={d}&dataFim={d}");
+    }
+
+    private async Task ConsultarAsync()
+    {
+        _carregando = true;
+        _erro = null;
+        var di = DateOnly.FromDateTime(_dataInicio);
+        var df = DateOnly.FromDateTime(_dataFim);
+        var (data, erro) = await ConsolidadoService.ObterHistoricoAsync(di, df);
+        _historico = data;
+        _erro = erro;
+        _carregando = false;
+    }
+}
