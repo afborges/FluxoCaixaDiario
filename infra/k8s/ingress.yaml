@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fluxo-caixa-ingress
+  namespace: fluxo-caixa
+  labels:
+    app.kubernetes.io/part-of: fluxo-caixa-diario
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # Rate limiting equivalente ao nginx.conf do Docker Compose (100 req/s)
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    # Timeouts alinhados com RNF-04 (Lançamentos P99 < 500ms) e RNF-05 (Consolidado P99 < 200ms)
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/lancamentos(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: lancamentos-api-svc
+                port:
+                  number: 80
+          - path: /api/consolidado(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: consolidado-api-svc
+                port:
+                  number: 80
+          - path: /health/lancamentos(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: lancamentos-api-svc
+                port:
+                  number: 80
+          - path: /health/consolidado(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: consolidado-api-svc
+                port:
+                  number: 80

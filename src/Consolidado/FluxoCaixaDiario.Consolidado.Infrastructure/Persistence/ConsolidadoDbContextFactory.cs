@@ -7,10 +7,13 @@ public sealed class ConsolidadoDbContextFactory : IDesignTimeDbContextFactory<Co
 {
     public ConsolidadoDbContext CreateDbContext(string[] args)
     {
+        var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__ConsolidadoDb")
+            ?? throw new InvalidOperationException(
+                "Variável de ambiente 'ConnectionStrings__ConsolidadoDb' não definida. " +
+                "Execute o script 'scripts/init-user-secrets.ps1' ou defina a variável antes de rodar 'dotnet ef'.");
+
         var options = new DbContextOptionsBuilder<ConsolidadoDbContext>()
-            .UseSqlServer(
-                "Server=localhost,1433;Database=ConsolidadoDB;User Id=sa;Password=FluxoCaixa@2024;TrustServerCertificate=True;",
-                sql => sql.EnableRetryOnFailure(3))
+            .UseSqlServer(connStr, sql => sql.EnableRetryOnFailure(3))
             .Options;
 
         return new ConsolidadoDbContext(options);

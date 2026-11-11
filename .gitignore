@@ -25,6 +25,7 @@ Logs/
 
 # Secrets e configurações locais (nunca commitar)
 **/appsettings.Local.json
+**/appsettings.Development.json
 **/secrets.json
 .env
 .env.*

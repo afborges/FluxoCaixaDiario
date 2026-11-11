@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FluxoCaixaDiario.Lancamentos.Application.Commands.CancelarLancamento;
 using FluxoCaixaDiario.Lancamentos.Application.Commands.CriarLancamento;
@@ -10,9 +11,11 @@ namespace FluxoCaixaDiario.Lancamentos.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public sealed class LancamentosController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> Criar([FromBody] CriarLancamentoCommand command, CancellationToken ct)
@@ -53,6 +56,7 @@ public sealed class LancamentosController(IMediator mediator) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]

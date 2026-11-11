@@ -5,6 +5,10 @@ using OpenTelemetry.Metrics;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using FluxoCaixaDiario.Lancamentos.API.Auth;
 using FluxoCaixaDiario.Lancamentos.API.Middlewares;
 using FluxoCaixaDiario.Lancamentos.Application;
 using FluxoCaixaDiario.Lancamentos.Infrastructure;
@@ -18,6 +22,27 @@ builder.Host.UseSerilog((ctx, cfg) =>
     cfg.ReadFrom.Configuration(ctx.Configuration));
 
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<UserStore>();
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
+builder.Services.AddAuthorization();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BlazorUI", policy =>
@@ -121,6 +146,8 @@ app.Use(async (context, next) =>
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors("BlazorUI");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<ApiKeyAuthMiddleware>();
 app.UseRateLimiter();
 
@@ -131,7 +158,8 @@ app.MapHealthChecks("/health");
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LancamentosDbContext>();
-    await db.Database.MigrateAsync();
+    if (db.Database.IsRelational())
+        await db.Database.MigrateAsync();
 }
 
 await app.RunAsync();

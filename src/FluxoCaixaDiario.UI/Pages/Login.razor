@@ -1,0 +1,67 @@
+@page "/login"
+@layout EmptyLayout
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Login — Fluxo de Caixa Diário</PageTitle>
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <span class="fs-1">💰</span>
+                <h4 class="mt-2 mb-0">Fluxo de Caixa Diário</h4>
+                <p class="text-muted small">Informe suas credenciais para acessar</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_erro))
+            {
+                <div class="alert alert-danger py-2">@_erro</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="EntrarAsync">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label class="form-label">Usuário</label>
+                    <input class="form-control" @bind="_model.Username" placeholder="admin ou viewer" autocomplete="username" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-control" @bind="_model.Password" autocomplete="current-password" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100" disabled="@_carregando">
+                    @(_carregando ? "Entrando..." : "Entrar")
+                </button>
+            </EditForm>
+
+            <hr class="my-3" />
+            <p class="text-muted small text-center mb-0">
+                <strong>Demo:</strong> admin / Admin@123 &nbsp;|&nbsp; viewer / Viewer@123
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginRequest _model = new();
+    private string? _erro;
+    private bool _carregando;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private async Task EntrarAsync()
+    {
+        _carregando = true;
+        _erro = null;
+
+        var (sucesso, erro) = await AuthService.LoginAsync(_model);
+
+        if (sucesso)
+            Navigation.NavigateTo(ReturnUrl ?? "/");
+        else
+            _erro = erro;
+
+        _carregando = false;
+    }
+}

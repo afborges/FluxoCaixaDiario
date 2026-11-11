@@ -5,12 +5,16 @@
 Esta pasta contém scripts de teste de carga usando [k6](https://k6.io), uma ferramenta
 open-source para testes de performance de APIs HTTP.
 
-Os testes cobrem dois objetivos:
+Os testes cobrem seis objetivos:
 
 | Objetivo | Script | Descrição |
 |----------|--------|-----------|
-| **Baseline de pico** | `lancamentos-baseline.js` | Verifica se Lancamentos atende ~50 req/s por 5 minutos |
+| **Baseline de pico** | `lancamentos-baseline.js` | Verifica se Lançamentos atende ~50 req/s por 5 minutos |
 | **Leitura sustentada** | `consolidado-baseline.js` | Verifica se Consolidado atende 100 req/s com cache |
+| **Estabilidade prolongada (Soak)** | `lancamentos-soak.js` | Detecta memory leaks e esgotamento de pool sob 40 VUs por 30m+ |
+| **Estabilidade prolongada (Soak)** | `consolidado-soak.js` | Detecta degradação progressiva de cache Redis sob 100 req/s por 30m+ |
+| **Pico súbito + recuperação (Spike)** | `lancamentos-spike.js` | Valida comportamento e recuperação após pico de 300 VUs (×6) |
+| **Pico súbito + recuperação (Spike)** | `consolidado-spike.js` | Valida comportamento e recuperação após pico de 600 req/s (×6) |
 
 ---
 
@@ -73,6 +77,62 @@ k6 run --out json=tests/k6/results/consolidado-$(date +%Y%m%d-%H%M).json \
        tests/k6/consolidado-baseline.js
 ```
 
+### Teste de Estabilidade Prolongada — Lançamentos (Soak)
+
+```bash
+# Duração padrão: 5m aquecimento + 30m soak + 5m desaquecimento
+k6 run tests/k6/lancamentos-soak.js
+
+# Recomendado para produção: 4h de soak
+k6 run -e SOAK_DURATION=4h tests/k6/lancamentos-soak.js
+
+# Com saída JSON
+k6 run --out json=tests/k6/results/lancamentos-soak-$(date +%Y%m%d-%H%M).json \
+       tests/k6/lancamentos-soak.js
+```
+
+### Teste de Pico + Recuperação — Lançamentos (Spike)
+
+```bash
+# Pico padrão: 300 VUs (×6 do baseline), janela de recuperação de 3 minutos
+k6 run tests/k6/lancamentos-spike.js
+
+# Para intensificar o pico
+k6 run -e SPIKE_VUS=500 tests/k6/lancamentos-spike.js
+
+# Com saída JSON
+k6 run --out json=tests/k6/results/lancamentos-spike-$(date +%Y%m%d-%H%M).json \
+       tests/k6/lancamentos-spike.js
+```
+
+### Teste de Estabilidade Prolongada — Consolidado (Soak)
+
+```bash
+# Executar APÓS os testes de Lançamentos (para ter dados no banco)
+k6 run tests/k6/consolidado-soak.js
+
+# Para produção (4h)
+k6 run -e SOAK_DURATION=4h tests/k6/consolidado-soak.js
+
+# Com saída JSON
+k6 run --out json=tests/k6/results/consolidado-soak-$(date +%Y%m%d-%H%M).json \
+       tests/k6/consolidado-soak.js
+```
+
+### Teste de Pico + Recuperação — Consolidado (Spike)
+
+```bash
+# Pico padrão: 600 req/s (×6 do baseline), janela de recuperação de 3 minutos
+k6 run tests/k6/consolidado-spike.js
+
+# Para intensificar o pico
+k6 run -e SPIKE_RATE=1000 tests/k6/consolidado-spike.js
+
+# Com saída JSON
+k6 run --out json=tests/k6/results/consolidado-spike-$(date +%Y%m%d-%H%M).json \
+       tests/k6/consolidado-spike.js
+```
+
 ---
 
 ## Thresholds de Aceitação
@@ -92,6 +152,36 @@ k6 run --out json=tests/k6/results/consolidado-$(date +%Y%m%d-%H%M).json \
 | `latencia_consolidado_dia` p99 | < 200ms | **RNF-05** | Critério de aceitação formal (inclui cache miss) |
 | `latencia_historico` p95 | < 300ms | — | Consulta de até 30 dias sem cache dedicado |
 | `erros` | < 0.5% | RNF-03 | Leitura deve ser mais estável que escrita |
+
+### Lançamentos — Soak Test
+| Métrica | Threshold | Justificativa |
+|---------|-----------|---------------|
+| `latencia_criar_lancamento` p99 | < 500ms | Deve manter-se estável ao longo de toda a duração |
+| `latencia_listar_lancamentos` p95 | < 200ms | Degradação progressiva indica esgotamento de pool |
+| `erros` | < 1% | Taxa contínua; pico pontual acima de 1% sinaliza vazamento |
+
+### Lançamentos — Spike Test
+| Métrica | Threshold | Justificativa |
+|---------|-----------|---------------|
+| `latencia_criar_lancamento` p99 | < 1000ms | Tolerância 2× durante o pico |
+| `erros` | < 5% | Burst traffic; RNF-03 é o limite formal |
+| `latencia_recuperacao` p95 | **< 300ms** | **Critério de recuperação** — igual ao baseline |
+| `latencia_recuperacao` p99 | **< 500ms** | **Critério de recuperação** — igual ao RNF-04 |
+
+### Consolidado — Soak Test
+| Métrica | Threshold | Justificativa |
+|---------|-----------|---------------|
+| `latencia_consolidado_dia` p95 | < 100ms | Cache deve manter-se aquecido ao longo do tempo |
+| `latencia_consolidado_dia` p99 | < 200ms | Degradação indica saturação de Redis ou conexões |
+| `erros` | < 0.5% | Leitura deve ser mais estável que escrita |
+
+### Consolidado — Spike Test
+| Métrica | Threshold | Justificativa |
+|---------|-----------|---------------|
+| `latencia_consolidado_dia` p99 | < 500ms | Tolerância durante pico de leitura |
+| `erros` | < 2% | Burst de dashboards simultâneos |
+| `latencia_recuperacao` p95 | **< 100ms** | **Critério de recuperação** — igual ao baseline |
+| `latencia_recuperacao` p99 | **< 200ms** | **Critério de recuperação** — igual ao RNF-05 |
 
 ---
 
@@ -122,13 +212,19 @@ watch -n2 'curl -s -u guest:guest http://localhost:15672/api/queues | \
 
 ---
 
-## Evolução Futura dos Testes
+## Evolução dos Testes
 
-Os testes acima são apenas o **baseline de aceitação** — verificam se o sistema
-atende o mínimo esperado. Para definir **quando e como escalar**, são recomendados
-testes mais intensos que ainda não foram implementados:
+### Status de implementação
 
-### Testes recomendados para roadmap
+| Tipo | Scripts | Status |
+|------|---------|--------|
+| **Baseline** | `lancamentos-baseline.js`, `consolidado-baseline.js` | ✅ Implementado |
+| **Soak** (estabilidade prolongada) | `lancamentos-soak.js`, `consolidado-soak.js` | ✅ Implementado |
+| **Spike** (pico + recuperação) | `lancamentos-spike.js`, `consolidado-spike.js` | ✅ Implementado |
+| **Stress** (ponto de ruptura) | — | 🗓 Roadmap |
+| **Breakpoint + HPA** | — | 🗓 Roadmap |
+
+### Testes ainda no roadmap
 
 1. **Stress Test** — aumentar carga progressivamente até o sistema falhar
    ```js
@@ -141,27 +237,7 @@ testes mais intensos que ainda não foram implementados:
    ]
    ```
 
-2. **Soak Test** — carga moderada por período longo (memory leaks, connection pool exhaustion)
-   ```js
-   // 80% da carga por 4 horas
-   stages: [
-     { duration: '10m', target: 40 },
-     { duration: '4h',  target: 40 },
-     { duration: '10m', target: 0  },
-   ]
-   ```
-
-3. **Spike Test** — pico súbito (simulação de pagamento de salários, abertura de mercado)
-   ```js
-   stages: [
-     { duration: '10s', target: 0   },
-     { duration: '10s', target: 500 },  // spike imediato
-     { duration: '3m',  target: 500 },
-     { duration: '10s', target: 0   },
-   ]
-   ```
-
-4. **Breakpoint Test com escalamento automático** — para dimensionar HPA no Kubernetes
+2. **Breakpoint Test com escalamento automático** — para dimensionar HPA no Kubernetes
    - Executar stress test enquanto monitora Prometheus/Grafana
    - Identificar o threshold de CPU/memória que antecede degradação
    - Configurar HPA com target ligeiramente abaixo desse threshold
@@ -181,8 +257,12 @@ k6 run --out json=resultado.json tests/k6/lancamentos-baseline.js
 
 ```
 tests/k6/
-├── lancamentos-baseline.js    ← Teste de escrita (criar/listar lançamentos)
-├── consolidado-baseline.js    ← Teste de leitura (consolidado com cache)
+├── lancamentos-baseline.js    ← Baseline: escrita ~50 req/s por 5 min
+├── lancamentos-soak.js        ← Soak: 40 VUs por 30m+ (estabilidade prolongada)
+├── lancamentos-spike.js       ← Spike: pico 300 VUs (×6) + validação de recuperação
+├── consolidado-baseline.js    ← Baseline: leitura 100 req/s com cache por 5 min
+├── consolidado-soak.js        ← Soak: 100 req/s por 30m+ (estabilidade prolongada)
+├── consolidado-spike.js       ← Spike: pico 600 req/s (×6) + validação de recuperação
 ├── results/                   ← Pasta para JSONs de resultado (git-ignored)
 └── README.md                  ← Este arquivo
 ```

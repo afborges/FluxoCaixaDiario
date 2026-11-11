@@ -11,7 +11,8 @@ public sealed class ApiKeyAuthMiddleware(RequestDelegate next, IConfiguration co
         "/health",
         "/metrics",
         "/swagger",
-        "/favicon.ico"
+        "/favicon.ico",
+        "/auth"
     ];
 
     public async Task InvokeAsync(HttpContext context)
@@ -19,6 +20,14 @@ public sealed class ApiKeyAuthMiddleware(RequestDelegate next, IConfiguration co
         var path = context.Request.Path.Value ?? string.Empty;
 
         if (_exemptPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+        {
+            await next(context);
+            return;
+        }
+
+        // Requisições com Bearer token JWT são autenticadas pelo middleware JWT
+        var authHeader = context.Request.Headers.Authorization.ToString();
+        if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
             await next(context);
             return;

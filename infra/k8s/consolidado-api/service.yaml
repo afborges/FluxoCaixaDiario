@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: consolidado-api-svc
+  namespace: fluxo-caixa
+  labels:
+    app: consolidado-api
+    app.kubernetes.io/part-of: fluxo-caixa-diario
+    app.kubernetes.io/component: consolidado
+spec:
+  selector:
+    app: consolidado-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

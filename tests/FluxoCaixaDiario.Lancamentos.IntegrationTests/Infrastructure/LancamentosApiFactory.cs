@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -17,22 +18,21 @@ namespace FluxoCaixaDiario.Lancamentos.IntegrationTests.Infrastructure;
 public sealed class LancamentosApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private MsSqlContainer? _sqlContainer;
-
-    public string? SkipReason { get; private set; }
+    private bool _useInMemory;
 
     async ValueTask IAsyncLifetime.InitializeAsync()
     {
         try
         {
             _sqlContainer = new MsSqlBuilder()
-                .WithPassword("LancTests@2024!")
+                .WithPassword(Environment.GetEnvironmentVariable("TEST_SQL_SA_PASSWORD") ?? "LancTests@2024!")
                 .Build();
 
             await _sqlContainer.StartAsync();
         }
         catch (ArgumentException ex) when (ex.ParamName == "DockerEndpointAuthConfig")
         {
-            SkipReason = "Docker não está disponível. Inicie o Docker Desktop para executar os testes de integração.";
+            _useInMemory = true;
         }
     }
 
@@ -46,18 +46,28 @@ public sealed class LancamentosApiFactory : WebApplicationFactory<Program>, IAsy
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTests");
-
-        builder.UseSetting("ConnectionStrings:LancamentosDb", _sqlContainer!.GetConnectionString());
         builder.UseSetting("ApiKey:Key", "test-api-key");
+
+        if (!_useInMemory)
+            builder.UseSetting("ConnectionStrings:LancamentosDb", _sqlContainer!.GetConnectionString());
 
         builder.ConfigureTestServices(services =>
         {
-            // Substitui o DbContext para apontar para o container de teste
             services.RemoveAll<DbContextOptions<LancamentosDbContext>>();
-            services.AddDbContext<LancamentosDbContext>(opts =>
-                opts.UseSqlServer(
-                    _sqlContainer!.GetConnectionString(),
-                    sql => sql.EnableRetryOnFailure(3)));
+            services.RemoveAll<IDbContextOptionsConfiguration<LancamentosDbContext>>();
+
+            if (_useInMemory)
+            {
+                services.AddDbContext<LancamentosDbContext>(opts =>
+                    opts.UseInMemoryDatabase("LancamentosTests"));
+            }
+            else
+            {
+                services.AddDbContext<LancamentosDbContext>(opts =>
+                    opts.UseSqlServer(
+                        _sqlContainer!.GetConnectionString(),
+                        sql => sql.EnableRetryOnFailure(3)));
+            }
 
             // Substitui IConnection (RabbitMQ.Client raw) por mock
             services.RemoveAll<IConnection>();
@@ -77,4 +87,17 @@ public sealed class LancamentosApiFactory : WebApplicationFactory<Program>, IAsy
                 services.Remove(s);
         });
     }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+        if (_useInMemory)
+        {
+            using var scope = host.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<LancamentosDbContext>();
+            db.Database.EnsureCreated();
+        }
+        return host;
+    }
 }
+

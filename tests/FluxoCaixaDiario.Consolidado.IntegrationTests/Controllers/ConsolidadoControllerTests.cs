@@ -11,16 +11,8 @@ using Xunit;
 namespace FluxoCaixaDiario.Consolidado.IntegrationTests.Controllers;
 
 public sealed class ConsolidadoControllerTests(ConsolidadoApiFactory factory)
-    : IClassFixture<ConsolidadoApiFactory>, IAsyncLifetime
+    : IClassFixture<ConsolidadoApiFactory>
 {
-    ValueTask IAsyncLifetime.InitializeAsync()
-    {
-        if (factory.SkipReason is not null)
-            Assert.Skip(factory.SkipReason);
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     private HttpClient CriarCliente(string? apiKey = "test-api-key")
     {
         var client = factory.CreateClient();

@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lancamentos-api
+  namespace: fluxo-caixa
+  labels:
+    app: lancamentos-api
+    app.kubernetes.io/part-of: fluxo-caixa-diario
+    app.kubernetes.io/component: lancamentos
+spec:
+  # Réplica inicial; o HPA ajusta dinamicamente
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lancamentos-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: lancamentos-api
+        app.kubernetes.io/part-of: fluxo-caixa-diario
+      annotations:
+        # Prometheus scraping via annotations (sem ServiceMonitor)
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: lancamentos-api
+          # Substitua pelo endereço do seu registry, ex: registry.example.com/fluxo-caixa/lancamentos-api:1.0.0
+          image: fluxo-caixa/lancamentos-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: fluxo-caixa-config
+            - secretRef:
+                name: fluxo-caixa-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12

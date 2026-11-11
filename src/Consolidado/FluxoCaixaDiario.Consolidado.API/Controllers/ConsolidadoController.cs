@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using FluxoCaixaDiario.Consolidado.Application.Queries.ObterConsolidadoDiario;
 using FluxoCaixaDiario.Consolidado.Application.Queries.ObterHistorico;
@@ -8,6 +9,7 @@ namespace FluxoCaixaDiario.Consolidado.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize]
 public sealed class ConsolidadoController(IMediator mediator) : ControllerBase
 {
     [HttpGet("{data}")]

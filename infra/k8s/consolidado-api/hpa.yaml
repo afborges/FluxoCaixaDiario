@@ -1,0 +1,50 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: consolidado-api-hpa
+  namespace: fluxo-caixa
+  labels:
+    app: consolidado-api
+    app.kubernetes.io/part-of: fluxo-caixa-diario
+    app.kubernetes.io/component: consolidado
+  annotations:
+    # Decisão documentada em docs/adr/ADR-008-kubernetes-hpa.md
+    # RNF-02: suportar >= 100 req/s sem degradação; RNF-04/05: P99 < 500ms/200ms
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: consolidado-api
+  # Mínimo de 2 para garantir HA; máximo de 5 para RNF-02 com folga
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # 60% conservador: cada réplica (200m request) escala ao atingir 120m de uso médio.
+          # Com 2 réplicas a 100 req/s, carga esperada ~40-50%; escalonamento dispara sob picos.
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleUp:
+      # Janela curta: reage rápido a picos de tráfego (RNF-02)
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 30
+    scaleDown:
+      # Janela longa: evita flapping após queda de carga
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120

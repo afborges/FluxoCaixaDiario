@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: fluxo-caixa
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - configmap.yaml
+  - lancamentos-api/deployment.yaml
+  - lancamentos-api/service.yaml
+  - lancamentos-api/hpa.yaml
+  - consolidado-api/deployment.yaml
+  - consolidado-api/service.yaml
+  - consolidado-api/hpa.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: fluxo-caixa-diario
+  app.kubernetes.io/managed-by: kustomize

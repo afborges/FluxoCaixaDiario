@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluxo-caixa-config
+  namespace: fluxo-caixa
+  labels:
+    app.kubernetes.io/part-of: fluxo-caixa-diario
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+
+  # RabbitMQ — host e vhost (senha vem do Secret)
+  RabbitMQ__Host: "rabbitmq-svc"
+  RabbitMQ__VirtualHost: "/"
+  RabbitMQ__Username: "guest"
+
+  # Serilog / Seq
+  Serilog__WriteTo__1__Args__serverUrl: "http://seq-svc:5341"
+
+  # JWT — configurações não-sensíveis
+  Jwt__Issuer: "FluxoCaixaDiario"
+  Jwt__Audience: "FluxoCaixaDiario.UI"
+  Jwt__ExpiracaoHoras: "8"

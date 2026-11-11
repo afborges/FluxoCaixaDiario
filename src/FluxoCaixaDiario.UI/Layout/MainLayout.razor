@@ -5,8 +5,13 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row px-4 d-flex align-items-center justify-content-end gap-3">
+            <AuthorizeView>
+                <Authorized>
+                    <span class="text-muted small">👤 @context.User.Identity!.Name</span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LogoutAsync">Sair</button>
+                </Authorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">
@@ -14,3 +19,14 @@
         </article>
     </main>
 </div>
+
+@code {
+    [Inject] private AuthService AuthService { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+}

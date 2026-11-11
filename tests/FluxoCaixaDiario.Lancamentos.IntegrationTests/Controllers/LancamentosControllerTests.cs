@@ -8,18 +8,9 @@ using Xunit;
 namespace FluxoCaixaDiario.Lancamentos.IntegrationTests.Controllers;
 
 public sealed class LancamentosControllerTests(LancamentosApiFactory factory)
-    : IClassFixture<LancamentosApiFactory>, IAsyncLifetime
+    : IClassFixture<LancamentosApiFactory>
 {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
-
-    ValueTask IAsyncLifetime.InitializeAsync()
-    {
-        if (factory.SkipReason is not null)
-            Assert.Skip(factory.SkipReason);
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private HttpClient CriarCliente(string? apiKey = "test-api-key")
     {

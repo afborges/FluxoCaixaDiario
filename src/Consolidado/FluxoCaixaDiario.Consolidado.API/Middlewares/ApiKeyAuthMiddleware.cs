@@ -24,6 +24,14 @@ public sealed class ApiKeyAuthMiddleware(RequestDelegate next, IConfiguration co
             return;
         }
 
+        // Requisições com Bearer token JWT são autenticadas pelo middleware JWT
+        var authHeader = context.Request.Headers.Authorization.ToString();
+        if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            await next(context);
+            return;
+        }
+
         var configuredKey = configuration["ApiKey:Key"];
 
         if (string.IsNullOrWhiteSpace(configuredKey))

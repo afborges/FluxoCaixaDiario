@@ -5,21 +5,18 @@
 
 ---
 
-> ## ⚠️ Aviso de Segurança — Credenciais no Repositório
+> ## 🔐 Gestão de Segredos
 >
-> **Este repositório contém intencionalmente credenciais, senhas e configurações de ambiente em texto claro** (ex.: strings de conexão com SQL Server, senha do RabbitMQ, API Key placeholder, senha do Redis). Isso foi feito **exclusivamente para facilitar a avaliação e execução local deste desafio técnico**, eliminando a necessidade de configuração manual do ambiente por parte do avaliador.
+> Os arquivos versionados (`appsettings.json`, `docker-compose.yml`) contêm apenas **placeholders** (`CHANGE_ME`). As credenciais reais são fornecidas em tempo de execução por uma das três formas abaixo:
 >
-> **Em um projeto real — de desenvolvimento ou produção — isso jamais deve acontecer.** As boas práticas adotadas no mercado são:
+> | Cenário | Mecanismo | Como configurar |
+> |---------|-----------|-----------------|
+> | **Docker Compose** | Variáveis de ambiente com fallback | Copie `.env.example` → `.env` e ajuste os valores. O Compose injeta automaticamente nas APIs via `ConnectionStrings__*`, `Jwt__Secret`, etc. |
+> | **Dev local (`dotnet run`)** | `dotnet user-secrets` | Execute `.\scripts\init-user-secrets.ps1` uma única vez após clonar o repositório. Os segredos ficam em `%APPDATA%\Microsoft\UserSecrets\` e nunca são commitados. |
+> | **CI/CD / Produção** | Pipeline secrets + variáveis de ambiente | GitHub Actions Secrets, Azure DevOps Variable Groups, Azure Key Vault ou equivalente. O ASP.NET Core lê `ConnectionStrings__LancamentosDb`, `ApiKey__Key`, `Jwt__Secret` etc. nativamente via env vars. |
 >
-> | Prática | Ferramentas / Como aplicar |
-> |---------|---------------------------|
-> | **Nunca versionar segredos** | Adicionar `appsettings.*.json`, `.env` e arquivos de certificado ao `.gitignore`; usar apenas placeholders como `CHANGE_ME` nos arquivos versionados |
-> | **Variáveis de ambiente** | Sobrescrever configurações sensíveis em runtime via variáveis de ambiente (`ApiKey__Key`, `ConnectionStrings__LancamentosDb`, etc.) — o ASP.NET Core já suporta isso nativamente |
-> | **Gerenciadores de segredos locais** | `dotnet user-secrets` para desenvolvimento local — os valores ficam fora da árvore do projeto, em `%APPDATA%\Microsoft\UserSecrets` |
-> | **Cofres de segredos em nuvem** | [Azure Key Vault](https://learn.microsoft.com/azure/key-vault/), [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) ou [HashiCorp Vault](https://www.vaultproject.io/) para ambientes de staging e produção |
-> | **CI/CD com segredos protegidos** | GitHub Actions Secrets, Azure DevOps Variable Groups ou equivalente — os valores são injetados na pipeline sem aparecer nos logs |
-> | **Rotação periódica de segredos** | Automatizada via Key Vault + Managed Identity, sem downtime e sem alterar o código |
-> | **Auditoria e detecção** | Ferramentas como [git-secrets](https://github.com/awslabs/git-secrets), [truffleHog](https://github.com/trufflesecurity/trufflehog) ou [GitGuardian](https://www.gitguardian.com/) para detectar credenciais acidentalmente commitadas |
+> **Arquivos excluídos do git** (via `.gitignore`): `appsettings.Development.json`, `.env`, `.env.*`
+> — use os arquivos `.example` correspondentes como ponto de partida.
 >
 > A decisão de arquitetura relacionada à autenticação está documentada em [ADR-006](docs/adr/ADR-006-autenticacao-api-key.md).
 
@@ -193,8 +190,8 @@ Isso irá subir:
 | Lancamentos API | http://localhost:5010 | API Key (ver [Segurança](#segurança)) |
 | Consolidado API | http://localhost:5011 | API Key (ver [Segurança](#segurança)) |
 | API Gateway (Nginx) | http://localhost:8080 | — |
-| RabbitMQ Management | http://localhost:15672 | guest/guest |
-| SQL Server | localhost:1433 | sa/FluxoCaixa@2024 |
+| RabbitMQ Management | http://localhost:15672 | guest / `${RABBITMQ_PASSWORD}` (ver `.env.example`) |
+| SQL Server | localhost:1433 | sa / `${SQL_SA_PASSWORD}` (ver `.env.example`) |
 | Redis | localhost:6379 | — |
 | Seq (Logs) | http://localhost:5341 | — |
 | Grafana | http://localhost:3000 | admin/admin |
@@ -225,6 +222,43 @@ dotnet run
 cd src/Consolidado/FluxoCaixaDiario.Consolidado.API
 dotnet run
 ```
+
+### 5. Deploy em Kubernetes (produção / staging)
+
+> **Pré-requisitos:** cluster Kubernetes com `metrics-server` e Nginx Ingress Controller instalados.
+
+```bash
+# 1. Preencha os segredos reais no manifesto (ou use kubectl create secret)
+cp infra/k8s/secret.yaml infra/k8s/secret.local.yaml   # não versionar!
+# edite infra/k8s/secret.local.yaml com os valores reais
+
+# 2. Aplique todos os manifestos via Kustomize
+kubectl apply -k infra/k8s/
+
+# 3. Verifique o estado do cluster
+kubectl get pods,svc,hpa -n fluxo-caixa
+
+# 4. Acompanhe o HPA em ação
+kubectl get hpa -n fluxo-caixa --watch
+```
+
+**Estrutura dos manifestos (`infra/k8s/`):**
+
+| Arquivo | Recurso |
+|---------|---------|
+| `namespace.yaml` | Namespace `fluxo-caixa` |
+| `configmap.yaml` | Variáveis não-sensíveis (host RabbitMQ, Seq URL, ASPNETCORE_ENVIRONMENT) |
+| `secret.yaml` | Strings de conexão, API Keys, JWT Secret (substituir antes de aplicar) |
+| `lancamentos-api/deployment.yaml` | Deployment: 1–3 réplicas, resources 100m/256Mi → 500m/512Mi |
+| `lancamentos-api/service.yaml` | ClusterIP na porta 80 |
+| `lancamentos-api/hpa.yaml` | HPA: CPU 70%, min=1, max=3 |
+| `consolidado-api/deployment.yaml` | Deployment: 2–5 réplicas, anti-affinity, resources 200m/512Mi → 1000m/1Gi |
+| `consolidado-api/service.yaml` | ClusterIP na porta 80 |
+| `consolidado-api/hpa.yaml` | **HPA: CPU 60%, min=2, max=5, scaleUp em 30s** (RNF-02) |
+| `ingress.yaml` | Nginx Ingress com rate-limit 100 req/s, paths `/api/lancamentos` e `/api/consolidado` |
+| `kustomization.yaml` | Kustomize — agrupa todos os recursos acima |
+
+> 📋 Decisão arquitetural documentada em [docs/adr/ADR-008-kubernetes-hpa.md](docs/adr/ADR-008-kubernetes-hpa.md).
 
 ---
 
@@ -585,8 +619,10 @@ O sistema registra automaticamente **toda operação de escrita** em uma tabela 
 
 | Banco | Server | Database | User | Senha |
 |-------|--------|----------|------|-------|
-| Lançamentos | `localhost,1433` | `LancamentosDb` | `sa` | `FluxoCaixa@2024` |
-| Consolidado | `localhost,1433` | `ConsolidadoDb` | `sa` | `FluxoCaixa@2024` |
+| Lançamentos | `localhost,1433` | `LancamentosDb` | `sa` | `${SQL_SA_PASSWORD}` |
+| Consolidado | `localhost,1433` | `ConsolidadoDb` | `sa` | `${SQL_SA_PASSWORD}` |
+
+> Valor padrão definido em `.env.example`. Execute `cp .env.example .env` antes de subir o ambiente.
 
 > Use **Azure Data Studio**, **SSMS** ou `sqlcmd` para conectar.
 
@@ -657,6 +693,7 @@ ORDER BY Total DESC;
 | Autenticação | API Key via header `X-Api-Key` | OAuth2/JWT, Basic Auth | Viável sem IdP externo; OAuth2 planejado para produção |
 | **Rate Limiting** | **Fixed Window nativo do ASP.NET Core 10 (100 req/janela, queue 10)** | **Middleware customizado, Nginx** | **Zero dependência extra; thread-safe; elimina middleware customizado** |
 | **Auditoria** | **`AuditBehavior` (MediatR pipeline) + `AuditLog` (SharedKernel)** | **Sem auditoria / log simples** | **Sistema financeiro: toda operação de escrita deve ser rastreable** |
+| **Escalonamento** | **Kubernetes HPA — CPU 60% / min=2 / max=5 (Consolidado)** | **Docker Swarm `--scale`, KEDA** | **Escalonamento automático baseado em métricas; garante RNF-02 (100 req/s) sem intervenção manual — ver [ADR-008](docs/adr/ADR-008-kubernetes-hpa.md)** |
 
 > Documentação completa de cada decisão: [docs/adr/](docs/adr/)
 
@@ -672,16 +709,17 @@ ORDER BY Total DESC;
 - [x] **Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection` em todas as respostas
 - [x] **Auditoria persistida** — `AuditBehavior` intercepta automaticamente todos os Commands no Lançamentos; consumers do Consolidado registram audit após processar cada evento; tabela `AuditLogs` em ambos os bancos com índices em `OcorridoEm`, `Operacao` e `CorrelationId`
 - [x] **Testes de carga k6 baseline** — valida RNF-02 (100 req/s Consolidado), RNF-03 (erro < 0,5%), RNF-04 (P99 < 500ms Lançamentos) e RNF-05 (P99 < 200ms Consolidado); ver `tests/k6/`
-- [x] **Trade-offs documentados** — todos os 6 ADRs possuem seção `## Trade-off Decisório` explícita
+- [x] **Trade-offs documentados** — todos os 8 ADRs possuem seção `## Trade-off Decisório` explícita
+- [x] **Testes de integração** — `WebApplicationFactory` + EF Core InMemory (fallback automático quando Docker indisponível) + Testcontainers (SQL Server); cobre repositórios EF, consumers MassTransit e endpoints end-to-end
+- [x] **Kubernetes com HPA** — manifestos em `infra/k8s/`; `consolidado-api` escala de 2 a 5 réplicas com target CPU 60% (RNF-02); `lancamentos-api` escala de 1 a 3 réplicas; Ingress com rate-limit 100 req/s — ver [ADR-008](docs/adr/ADR-008-kubernetes-hpa.md)
 
 ### 🔜 Próximas evoluções
 
-- [ ] **Testes de integração** — `WebApplicationFactory` + EF Core InMemory (ou Testcontainers) cobrindo repositórios EF, consumers MassTransit e endpoints end-to-end; complementa a pirâmide de testes descrita em [docs/03-arquitetura-software.md](docs/03-arquitetura-software.md)
 - [ ] **Rastreamento distribuído com Jaeger/Tempo**
 - [ ] **Testes k6 stress/soak/spike** — determinar limiares de degradação, pontos de escalonamento e comportamento sob carga sustentada
 - [ ] **Endpoint de consulta de auditoria** — `GET /api/auditoria` com filtros por operação, período e correlation-id
 - [ ] **OAuth2/JWT com Keycloak ou Azure AD B2C** — autenticação delegada, autorização por escopos, substituindo a API Key em produção
-- [ ] **Kubernetes** com HPA para escalonamento automático do serviço Consolidado
+- [ ] **KEDA** — escalonamento baseado em tamanho de fila RabbitMQ (métrica de negócio) em substituição ao HPA baseado em CPU
 - [ ] **Event Sourcing** para histórico completo e imutável de todos os lançamentos
 - [ ] **Relatórios avançados**: saldo por categoria, tendências, projeções
 - [ ] **Notificações**: alertas quando saldo ficar negativo

@@ -1,4 +1,5 @@
 @page "/lancamentos"
+@attribute [Authorize]
 @using System.Globalization
 @inject LancamentosApiService LancamentosService
 
@@ -52,11 +53,15 @@
 </div>
 
 <!-- Botão novo lançamento -->
-<div class="d-flex justify-content-end mb-3">
-    <button class="btn @(_mostrarFormulario ? "btn-outline-secondary" : "btn-success")" @onclick="ToggleFormulario">
-        @(_mostrarFormulario ? "✕ Fechar" : "+ Novo Lançamento")
-    </button>
-</div>
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn @(_mostrarFormulario ? "btn-outline-secondary" : "btn-success")" @onclick="ToggleFormulario">
+                @(_mostrarFormulario ? "✕ Fechar" : "+ Novo Lançamento")
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 <!-- Formulário de criação -->
 @if (_mostrarFormulario)
@@ -153,11 +158,18 @@ else
                         <td class="text-center">
                             @if (item.Status == "Ativo")
                             {
-                                <button class="btn btn-sm btn-outline-danger"
-                                        @onclick="() => CancelarAsync(item.Id)"
-                                        disabled="@(_cancelando == item.Id)">
-                                    @(_cancelando == item.Id ? "..." : "Cancelar")
-                                </button>
+                                <AuthorizeView Roles="Admin">
+                                    <Authorized>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => CancelarAsync(item.Id)"
+                                                disabled="@(_cancelando == item.Id)">
+                                            @(_cancelando == item.Id ? "..." : "Cancelar")
+                                        </button>
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        <span class="text-muted">—</span>
+                                    </NotAuthorized>
+                                </AuthorizeView>
                             }
                             else
                             {
